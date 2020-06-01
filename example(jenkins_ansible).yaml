@@ -1,0 +1,57 @@
+--- # Author Sadykov Farkhod
+-  hosts: all
+   become: yes
+   become_method: sudo
+   connection: ssh
+   tasks:
+     - name: Downloading jenkins repo into /etc/yum.repo.d/
+       yum_repository:
+         name: jenkins
+         description: Jenkins repository from jenkins-ci.org
+         file: jenkins
+         baseurl: http://pkg.jenkins.io/redhat
+         gpgcheck: yes
+         enabled: yes
+       become: yes
+
+     - name: Importing repository keys for jenkins
+       rpm_key:
+         state: present
+         key: https://jenkins-ci.org/redhat/jenkins-ci.org.key
+       become: yes
+
+     - name: Install Git on Jenkins Server
+       yum: name=git state=present
+       become: yes
+
+     - name: Install unzip on Jenkins Server
+       yum: name=unzip state=present
+       become: yes
+
+     - name: Downloading terraform
+       shell: '(cd /tmp/ && curl -O https://releases.hashicorp.com/terraform/0.11.1/terraform_0.11.1_linux_amd64.zip)'
+
+     - name: Unziping terraform to bin
+       command: "unzip /tmp/terraform_0.11.1_linux_amd64.zip -d /usr/bin/"
+
+     - name: Installing Jenkins on remote System
+       yum: name=jenkins state=present
+       become: yes
+
+     - name: Installing Jenkins on remote System
+       yum: name=java-1.8.0-openjdk state=present
+       become: yes
+
+     - name: Start Jenkins server and enable it
+       service: name=jenkins state=started enabled=yes
+       become: yes
+
+     - name: Waiting until server is up
+       wait_for:
+         path: /var/lib/jenkins/secrets/initialAdminPassword
+
+     - name: Download admin password for Jenkins
+       fetch:
+         src: /var/lib/jenkins/secrets/initialAdminPassword
+         dest: ./password/AdmPassword_{{ inventory_hostname }}
+         flat: yes
