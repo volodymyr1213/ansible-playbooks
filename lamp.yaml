@@ -1,0 +1,30 @@
+---  #web server
+- hosts: all
+  connection: ssh
+  become: yes
+  become_method: sudo 
+  gather_facts: no 
+  tasks:
+    - name: Install webserver
+      yum: name=httpd        state=installed
+      notify:
+      - HTTPD 
+
+    - name: Install PHP
+      yum: name=php state=installed
+
+    - name: Install DB
+      yum:
+        name: mariadb
+        state: installed
+
+    - name: Install mysql client
+      yum:
+        name: mysql
+        state: installed
+
+
+
+  handlers:
+    - name: HTTPD
+      systemd: name=httpd state=restarted enabled=yes
